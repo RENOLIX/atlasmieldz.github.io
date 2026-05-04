@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Atlas Miel</title>
+    <script>
+      (function () {
+        var pathSegmentsToKeep = 0;
+        var location = window.location;
+        var segments = location.pathname.split("/");
+        var base = segments.slice(0, 1 + pathSegmentsToKeep).join("/");
+        var route = location.pathname.slice(base.length).replace(/^\//, "");
+        var query = location.search
+          ? "~q~" + location.search.slice(1).replace(/&/g, "~and~")
+          : "";
+
+        location.replace(base + "/?/" + route + query + location.hash);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
