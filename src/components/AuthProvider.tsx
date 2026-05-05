@@ -38,6 +38,15 @@ async function fetchRole(userId: string) {
   return String(data.role) as AdminRole;
 }
 
+async function resolveRoleWithRetry(userId: string, attempts = 12) {
+  for (let index = 0; index < attempts; index += 1) {
+    const role = await fetchRole(userId);
+    if (role) return role;
+    await new Promise((resolve) => window.setTimeout(resolve, 300));
+  }
+  return null;
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -68,7 +77,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       setSession(data.session ?? null);
       setUser(data.session?.user ?? null);
-      setRole(data.session?.user ? await fetchRole(data.session.user.id) : null);
+      setRole(data.session?.user ? await resolveRoleWithRetry(data.session.user.id) : null);
       setLoading(false);
     };
 
@@ -79,7 +88,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!mounted) return;
         setSession(nextSession ?? null);
         setUser(nextSession?.user ?? null);
-        setRole(nextSession?.user ? await fetchRole(nextSession.user.id) : null);
+        setRole(nextSession?.user ? await resolveRoleWithRetry(nextSession.user.id) : null);
         setLoading(false);
       })();
     });
@@ -91,21 +100,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return error.message;
-
-    const nextRole = data.user ? await fetchRole(data.user.id) : null;
-    if (!nextRole) {
-      await supabase.auth.signOut();
-      setSession(null);
-      setUser(null);
-      setRole(null);
-      return "هذا الحساب غير مضاف إلى لوحة الإدارة بعد. شغّل أمر الترقية في SQL ثم جرّب مرة أخرى.";
+    if (error) {
+      setLoading(false);
+      return error.message;
     }
 
-    setSession(data.session ?? null);
-    setUser(data.user ?? null);
+    const nextSession = data.session ?? null;
+    const nextUser = nextSession?.user ?? data.user ?? null;
+    const nextRole = nextUser ? await resolveRoleWithRetry(nextUser.id) : null;
+
+    setSession(nextSession);
+    setUser(nextUser);
     setRole(nextRole);
+    setLoading(false);
+
+    if (!nextRole) {
+      await supabase.auth.signOut();
+      return "تم تسجيل الدخول لكن لم يتم العثور على صلاحية الإدارة لهذا الحساب. تأكد أن نفس البريد موجود في auth.users و admin_users داخل نفس مشروع Supabase.";
+    }
+
     return null;
   };
 
