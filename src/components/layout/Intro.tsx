@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { ASSETS } from "@/lib/constants";
 
 export function Intro({ onDone }: { onDone: () => void }) {
   const ref = useRef<HTMLVideoElement>(null);
@@ -40,7 +41,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
             preload="auto"
             className="h-full w-full object-cover"
           >
-            <source src="/videos/atlas-intro.mp4" type="video/mp4" />
+            <source src={ASSETS.introVideo} type="video/mp4" />
           </video>
         </motion.div>
       ) : null}

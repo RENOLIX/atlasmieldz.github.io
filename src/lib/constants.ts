@@ -7,7 +7,7 @@ import type { ProductRecord } from "@/types";
 
 export const SITE = {
   name: "ATLAS MIEL DZ",
-  domain: "https://atlas-miel.com",
+  domain: (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, "") || "https://renolix.github.io/atlasmieldz.github.io",
   phone: "+213 561 45 82 86",
   email: "contact@atlas-miel.com",
   city: "الجزائر العاصمة",

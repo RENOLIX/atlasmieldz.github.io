@@ -7,6 +7,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { SITE } from "@/lib/constants";
 import { createSecondarySupabaseClient, fetchAdminUsers, supabase } from "@/lib/supabase";
 import type { AdminRole, AdminUserRecord } from "@/types";
 
@@ -101,7 +102,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const sendReset = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://atlas-miel.com/admin/reset-password",
+      redirectTo: `${SITE.domain}/admin/reset-password`,
     });
     return error?.message ?? null;
   };
