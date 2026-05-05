@@ -20,7 +20,7 @@ jobs:
     env:
       VITE_SUPABASE_URL: https://oodlpererkbxhiuugbax.supabase.co
       VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_Iy7vBnXW9i9wb-TkEBSuFw_mA-k0JSr
-      VITE_PUBLIC_SITE_URL: https://atlas-miel.com/
+      VITE_PUBLIC_SITE_URL: https://renolix.github.io/atlasmieldz.github.io/
       VITE_META_PIXEL_ID: 801705945953894
       VITE_META_PIXEL_ENABLED: "true"
       VITE_BUILD_ID: ${{ github.sha }}

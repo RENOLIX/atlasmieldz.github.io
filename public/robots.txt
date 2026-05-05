@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://atlas-miel.com/sitemap.xml
+Sitemap: https://renolix.github.io/atlasmieldz.github.io/sitemap.xml

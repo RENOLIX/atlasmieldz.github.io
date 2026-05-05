@@ -29,13 +29,14 @@ function LegacyProductRedirect() {
 
 export default function App() {
   const [introDone, setIntroDone] = useState(false);
+  const basename = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 
   return (
     <AuthProvider>
       <CatalogProvider>
         {!introDone ? <Intro onDone={() => setIntroDone(true)} /> : null}
 
-        <BrowserRouter>
+        <BrowserRouter basename={basename || undefined}>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/produits" element={<ProductsPage />} />

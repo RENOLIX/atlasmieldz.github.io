@@ -6,7 +6,9 @@
     <title>Atlas Miel Auth</title>
     <script>
       (function () {
-        var target = "/auth/callback" + window.location.search + window.location.hash;
+        var pathname = window.location.pathname;
+        var base = pathname.replace(/\/auth\/callback\/?$/, "");
+        var target = base + "/auth/callback" + window.location.search + window.location.hash;
         window.location.replace(target);
       })();
     </script>

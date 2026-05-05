@@ -9,12 +9,14 @@ function restoreGitHubPagesPath() {
   const { location, history } = window;
   if (!location.search.startsWith("?/")) return;
 
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
   const decoded = location.search
     .slice(2)
     .replace(/~and~/g, "&")
     .replace(/~q~/g, "?");
 
-  const nextUrl = `${location.pathname.slice(0, -1) || ""}/${decoded}${location.hash}`;
+  const nextUrl = `${basePath}/${decoded}${location.hash}`;
   history.replaceState(null, "", nextUrl);
 }
 
