@@ -38,6 +38,11 @@ async function fetchRole(userId: string) {
   return String(data.role) as AdminRole;
 }
 
+async function claimAdminAccess() {
+  const { error } = await supabase.rpc("claim_admin_access");
+  return !error;
+}
+
 async function resolveRoleWithRetry(userId: string, attempts = 12) {
   for (let index = 0; index < attempts; index += 1) {
     const role = await fetchRole(userId);
@@ -45,6 +50,18 @@ async function resolveRoleWithRetry(userId: string, attempts = 12) {
     await new Promise((resolve) => window.setTimeout(resolve, 300));
   }
   return null;
+}
+
+async function resolveAdminRole(user: User | null) {
+  if (!user) return null;
+
+  const directRole = await resolveRoleWithRetry(user.id);
+  if (directRole) return directRole;
+
+  const claimed = await claimAdminAccess();
+  if (!claimed) return null;
+
+  return resolveRoleWithRetry(user.id);
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
@@ -77,7 +94,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       setSession(data.session ?? null);
       setUser(data.session?.user ?? null);
-      setRole(data.session?.user ? await resolveRoleWithRetry(data.session.user.id) : null);
+      setRole(await resolveAdminRole(data.session?.user ?? null));
       setLoading(false);
     };
 
@@ -88,7 +105,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!mounted) return;
         setSession(nextSession ?? null);
         setUser(nextSession?.user ?? null);
-        setRole(nextSession?.user ? await resolveRoleWithRetry(nextSession.user.id) : null);
+        setRole(await resolveAdminRole(nextSession?.user ?? null));
         setLoading(false);
       })();
     });
@@ -109,7 +126,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const nextSession = data.session ?? null;
     const nextUser = nextSession?.user ?? data.user ?? null;
-    const nextRole = nextUser ? await resolveRoleWithRetry(nextUser.id) : null;
+    const nextRole = await resolveAdminRole(nextUser);
 
     setSession(nextSession);
     setUser(nextUser);
