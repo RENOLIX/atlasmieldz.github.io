@@ -104,9 +104,7 @@ export function HomePage() {
   const { scrollYProgress: storyProgress } = useScroll({ target: storyRef, offset: ["start start", "end end"] });
   const heroOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.18]);
   const heroScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
-  const storyIntroOpacity = useTransform(storyProgress, [0, 0.08], [1, 0]);
-  const storyIntroY = useTransform(storyProgress, [0, 0.08], [0, -46]);
-  const storySceneProgress = useTransform(storyProgress, [0.1, 0.92], [0, 1]);
+  const storySceneProgress = useTransform(storyProgress, [0.06, 0.94], [0, 1]);
 
   useEffect(() => {
     void trackPixel("PageView", undefined, {
@@ -301,29 +299,31 @@ export function HomePage() {
           </div>
         </section>
 
-        <section ref={storyRef} className="relative h-[420vh] overflow-hidden bg-[#f6f0e6]">
+        <section className="bg-[#f6f0e6] pt-20 md:pt-24">
+          <motion.div
+            {...revealUp}
+            className="mx-auto mb-8 max-w-4xl px-6 text-center"
+          >
+            <p className="text-sm font-extrabold tracking-[0.28em] text-[#d18b11]">لماذا نختار عسلنا؟</p>
+            <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">ثلاث مراحل داخل نفس المشهد</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-8 text-[#6a533a] md:text-base">
+              مع كل سكرول، تظهر صورتان جديدتان من اليمين واليسار، بينما يرتفع عنوان المرحلة الحالية للأعلى ليأخذ التالي مكانه في نفس البلوك.
+            </p>
+          </motion.div>
+
+          <section ref={storyRef} className="relative h-[240vh] overflow-hidden md:h-[280vh]">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(209,139,17,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(209,139,17,0.08)_1px,transparent_1px)] bg-[size:64px_64px]" />
 
           <div className="sticky top-0 h-screen overflow-hidden">
             <div className="mx-auto w-full max-w-7xl px-6">
-              <motion.div
-                style={{ opacity: storyIntroOpacity, y: storyIntroY }}
-                className="absolute inset-x-0 top-20 z-20 text-center"
-              >
-                <p className="text-sm font-extrabold tracking-[0.28em] text-[#d18b11]">لماذا نختار عسلنا؟</p>
-                <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">ثلاث مراحل داخل نفس المشهد</h2>
-                <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-8 text-[#6a533a] md:text-base">
-                  مع كل سكرول، تظهر صورتان جديدتان من اليمين واليسار، بينما يرتفع عنوان المرحلة الحالية للأعلى ليأخذ التالي مكانه في نفس البلوك.
-                </p>
-              </motion.div>
-
-              <div className="relative h-screen">
+              <div className="relative flex h-screen items-center">
                 {showcasePairs.map((item, index) => (
                   <ScrollStoryScene key={item.step} progress={storySceneProgress} item={item} index={index} />
                 ))}
               </div>
             </div>
           </div>
+          </section>
         </section>
 
         <section className="mx-auto max-w-7xl px-6 py-20">
