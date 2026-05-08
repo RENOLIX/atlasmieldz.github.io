@@ -29,6 +29,12 @@ export function ProductPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<"domicile" | "bureau">("domicile");
   const [submitting, setSubmitting] = useState(false);
 
+  const scrollToOrderForm = () => {
+    const form = document.getElementById("formulaire-commande");
+    if (!form) return;
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   useEffect(() => {
     if (product?.weightOptions[0]) {
       setSelectedWeight(product.weightOptions[0].label);
@@ -87,7 +93,7 @@ export function ProductPage() {
   return (
     <div className="min-h-screen bg-[#fffaf0] text-[#24160b]">
       <Navbar />
-      <main className="mx-auto max-w-7xl px-6 pt-32 pb-20">
+      <main className="mx-auto max-w-7xl px-6 pt-32 pb-32 md:pb-20">
         <div className="grid gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <section>
             <div className="overflow-hidden rounded-[32px] bg-white shadow-[0_28px_80px_-58px_rgba(112,69,8,0.55)]">
@@ -120,7 +126,7 @@ export function ProductPage() {
 
             <div className="mt-8">
               <p className="mb-3 text-sm font-extrabold">اختر الوزن</p>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 {product.weightOptions.map((option) => (
                   <button
                     key={option.label}
@@ -288,6 +294,11 @@ export function ProductPage() {
           </form>
         </motion.section>
       </main>
+      <div className="fixed inset-x-4 bottom-4 z-40 md:hidden">
+        <Button className="w-full py-4 shadow-[0_18px_45px_rgba(36,22,11,0.22)]" onClick={scrollToOrderForm}>
+          اشتر الآن
+        </Button>
+      </div>
       <Footer />
     </div>
   );
