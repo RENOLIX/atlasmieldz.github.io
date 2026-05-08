@@ -46,6 +46,14 @@ export function ProductPage() {
     () => product?.weightOptions.find((option) => option.label === selectedWeight) ?? product?.weightOptions[0],
     [product, selectedWeight],
   );
+  const descriptionParagraphs = useMemo(
+    () =>
+      product?.description
+        .split(/(?<=[.!؟])\s+/u)
+        .map((chunk) => chunk.trim())
+        .filter(Boolean) ?? [],
+    [product?.description],
+  );
 
   const subtotal = (weightOption?.price ?? 0) * quantity;
   const freeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
@@ -130,7 +138,13 @@ export function ProductPage() {
                 <span className="text-lg font-bold text-[#8e7a66] line-through">{formatDzd(weightOption.comparePrice)}</span>
               ) : null}
             </div>
-            <p className="mt-6 text-base leading-8 text-[#5b4630]">{product.description}</p>
+            <div className="mt-6 space-y-4">
+              {(descriptionParagraphs.length ? descriptionParagraphs : [product.description]).map((paragraph, index) => (
+                <p key={`${index}-${paragraph.slice(0, 20)}`} className="text-justify text-base leading-8 text-[#5b4630]">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
 
             <div className="mt-8">
               <p className="mb-3 text-sm font-extrabold">اختر الوزن</p>
@@ -160,9 +174,9 @@ export function ProductPage() {
                 "منتج طبيعي مختار بعناية ومناسب للإهداء أو الاستهلاك اليومي.",
                 "الدفع عند الاستلام مع خدمة توصيل مرنة.",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <CheckCircle2 size={18} className="mt-1 shrink-0 text-[#d18b11]" />
-                  <p className="text-sm leading-7 text-[#5b4630]">{item}</p>
+                <div key={item} className="flex items-start rounded-2xl bg-white px-4 py-3 shadow-sm">
+                  <p className="flex-1 text-right text-sm leading-7 text-[#5b4630]">{item}</p>
+                  <CheckCircle2 size={18} className="mt-1 mr-3 shrink-0 text-[#d18b11]" />
                 </div>
               ))}
             </div>
