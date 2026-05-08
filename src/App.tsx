@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/components/AuthProvider";
 import { CatalogProvider } from "@/components/CatalogProvider";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { Intro } from "@/components/layout/Intro";
 import { ContactPage } from "@/pages/ContactPage";
 import { HomePage } from "@/pages/HomePage";
@@ -37,6 +38,7 @@ export default function App() {
         {!introDone ? <Intro onDone={() => setIntroDone(true)} /> : null}
 
         <BrowserRouter basename={basename || undefined}>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/produits" element={<ProductsPage />} />

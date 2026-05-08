@@ -166,7 +166,6 @@ export function HomePage() {
           muted
           playsInline
           preload="auto"
-          poster={ASSETS.ctaHoneycomb}
           className="absolute inset-0 h-full w-full object-cover"
         >
           <source src={ASSETS.heroVideo} type="video/mp4" />
