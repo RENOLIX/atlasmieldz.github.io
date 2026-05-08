@@ -4,15 +4,13 @@ import { motion, useScroll, useTransform } from "motion/react";
 import {
   ArrowLeft,
   BadgeCheck,
-  Leaf,
-  ShieldCheck,
   Sparkles,
   Truck,
 } from "lucide-react";
 import { useCatalog } from "@/components/CatalogProvider";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { ASSETS, HONEY_PILLARS, TESTIMONIALS } from "@/lib/constants";
+import { ASSETS, TESTIMONIALS } from "@/lib/constants";
 import { trackPixel } from "@/lib/pixel";
 import { formatDzd } from "@/lib/utils";
 
@@ -48,6 +46,48 @@ export function HomePage() {
     () => products.filter((product) => product.active).slice(0, 3),
     [products],
   );
+
+  const showcasePairs = useMemo(() => {
+    const images = products
+      .filter((product) => product.active)
+      .flatMap((product) => product.images)
+      .slice(0, 6);
+
+    const fallback = [
+      ASSETS.ctaHoneycomb,
+      ASSETS.honeyLiquid,
+      ASSETS.arabicHoneyShowcase,
+      ASSETS.ctaHoneycomb,
+      ASSETS.honeyLiquid,
+      ASSETS.arabicHoneyShowcase,
+    ];
+
+    const pool = images.length === 6 ? images : fallback;
+
+    return [
+      {
+        step: "1",
+        title: "حصاد يدوي",
+        text: "يتم جمع العسل بعناية كبيرة للحفاظ على قوامه ونقائه منذ أول مرحلة.",
+        left: pool[0],
+        right: pool[1],
+      },
+      {
+        step: "2",
+        title: "بدون إضافات",
+        text: "نقدمه بطبيعته الكاملة، بلا خلط أو إضافات، حتى يصل بطعمه الحقيقي كما هو.",
+        left: pool[2],
+        right: pool[3],
+      },
+      {
+        step: "3",
+        title: "جودة مختبرة",
+        text: "كل دفعة تُراجع بعناية حتى نقدم لكم تجربة ثابتة تليق بثقتكم في العلامة.",
+        left: pool[4],
+        right: pool[5],
+      },
+    ];
+  }, [products]);
 
   return (
     <div className="overflow-x-hidden bg-[#fffaf0] text-[#24160b]">
@@ -181,42 +221,69 @@ export function HomePage() {
           </div>
         </section>
 
-        <section className="bg-[#fff4dc] py-20">
+        <section className="relative overflow-hidden bg-[#f6f0e6] py-20">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(209,139,17,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(209,139,17,0.08)_1px,transparent_1px)] bg-[size:64px_64px]" />
           <div className="mx-auto max-w-7xl px-6">
             <motion.div
               {...revealUp}
-              className="mb-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+              className="relative z-10 mb-16 text-center"
             >
-              <div className="max-w-3xl">
-                <p className="text-sm font-extrabold tracking-[0.28em] text-[#d18b11]">قيم العلامة</p>
-                <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">بلوكات أقوى، إحساس أوضح، وتجربة أقرب للمنتج</h2>
-              </div>
-              <div className="text-sm font-bold leading-7 text-[#6a533a] md:max-w-sm">
-                كل بطاقة هنا صارت تخدم هدفًا واضحًا: إظهار الجودة، رفع الثقة، وتسريع قرار الشراء.
-              </div>
+              <p className="text-sm font-extrabold tracking-[0.28em] text-[#d18b11]">لماذا نختار عسلنا؟</p>
+              <h2 className="mt-3 text-4xl font-extrabold md:text-5xl">6 صور تتحرك مع السّكرول وتحكي 3 أسباب واضحة للثقة</h2>
+              <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-8 text-[#6a533a] md:text-base">
+                كل مرحلتين من الصور تدخلان من الجانبين، وفي الوسط يظهر العنوان من الأسفل ليشرح قيمة حقيقية في المنتج.
+              </p>
             </motion.div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-              {HONEY_PILLARS.map((pillar, index) => {
-                const Icon = index === 0 ? Sparkles : index === 1 ? Leaf : ShieldCheck;
-                return (
-                  <motion.article
-                    key={pillar.title}
-                    initial={{ opacity: 0, y: 34, scale: 0.98 }}
-                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                    viewport={{ once: true, amount: 0.25 }}
-                    transition={{ duration: 0.65, delay: index * 0.08 }}
-                    className="group relative overflow-hidden rounded-[30px] bg-white p-7 shadow-[0_25px_70px_-56px_rgba(112,69,8,0.45)]"
+            <div className="relative z-10 space-y-12 md:space-y-20">
+              {showcasePairs.map((item) => (
+                <div
+                  key={item.step}
+                  className="grid min-h-[72vh] items-center gap-6 md:grid-cols-[1fr_auto_1fr]"
+                >
+                  <motion.div
+                    initial={{ opacity: 0, x: -90, rotate: -12 }}
+                    whileInView={{ opacity: 1, x: 0, rotate: -7 }}
+                    viewport={{ once: true, amount: 0.35 }}
+                    transition={{ duration: 0.8, delay: 0.05 }}
+                    className="relative mx-auto w-full max-w-[320px] md:max-w-[360px]"
                   >
-                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#f0a429] via-[#ffd37b] to-transparent" />
-                    <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-[22px] bg-[#fff3d9] text-[#d18b11] transition-transform duration-500 group-hover:scale-110">
-                      <Icon size={26} />
+                    <div className="absolute -top-5 left-4 h-full w-full rounded-[28px] border border-[#dbcdb8] bg-white/60" />
+                    <div className="overflow-hidden rounded-[28px] border border-[#d9ccb8] bg-white p-3 shadow-[0_28px_90px_-55px_rgba(112,69,8,0.35)]">
+                      <img src={item.left} alt={item.title} className="h-[380px] w-full rounded-[22px] object-cover md:h-[470px]" />
                     </div>
-                    <h3 className="text-2xl font-extrabold text-[#d18b11]">{pillar.title}</h3>
-                    <p className="mt-4 text-sm leading-8 text-[#5b4630]">{pillar.text}</p>
-                  </motion.article>
-                );
-              })}
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 80 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.45 }}
+                    transition={{ duration: 0.75, delay: 0.12 }}
+                    className="mx-auto max-w-sm text-center"
+                  >
+                    <div className="mx-auto inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#24160b] text-lg font-extrabold text-white shadow-[0_18px_40px_-20px_rgba(0,0,0,0.5)]">
+                      {item.step}
+                    </div>
+                    <h3 className="mt-5 text-3xl font-extrabold text-[#24160b] md:text-5xl">{item.title}</h3>
+                    <p className="mt-4 text-sm font-bold leading-8 text-[#6a533a] md:text-base">
+                      {item.text}
+                    </p>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: 90, rotate: 12 }}
+                    whileInView={{ opacity: 1, x: 0, rotate: 7 }}
+                    viewport={{ once: true, amount: 0.35 }}
+                    transition={{ duration: 0.8, delay: 0.05 }}
+                    className="relative mx-auto w-full max-w-[320px] md:max-w-[360px]"
+                  >
+                    <div className="absolute -top-5 right-4 h-full w-full rounded-[28px] border border-[#dbcdb8] bg-white/60" />
+                    <div className="overflow-hidden rounded-[28px] border border-[#d9ccb8] bg-white p-3 shadow-[0_28px_90px_-55px_rgba(112,69,8,0.35)]">
+                      <img src={item.right} alt={item.title} className="h-[380px] w-full rounded-[22px] object-cover md:h-[470px]" />
+                    </div>
+                  </motion.div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
