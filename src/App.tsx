@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/components/AuthProvider";
 import { CatalogProvider } from "@/components/CatalogProvider";
@@ -28,6 +28,50 @@ function LegacyProductRedirect() {
   return <Navigate to={id ? `/produits/${id}` : "/produits"} replace />;
 }
 
+function AppShell({ introDone, setIntroDone }: { introDone: boolean; setIntroDone: (value: boolean) => void }) {
+  const location = useLocation();
+  const showIntro = location.pathname === "/" && !introDone;
+
+  return (
+    <>
+      {showIntro ? <Intro onDone={() => setIntroDone(true)} /> : null}
+
+      <ScrollToTop />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/produits" element={<ProductsPage />} />
+        <Route path="/produits/:id" element={<ProductPage />} />
+        <Route path="/histoire" element={<StoryPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/merci" element={<ThanksPage />} />
+
+        <Route path="/shop" element={<Navigate to="/produits" replace />} />
+        <Route path="/shop/product/:id" element={<LegacyProductRedirect />} />
+        <Route path="/about" element={<Navigate to="/histoire" replace />} />
+        <Route path="/cart" element={<Navigate to="/produits" replace />} />
+        <Route path="/checkout" element={<Navigate to="/produits" replace />} />
+        <Route path="/checkout/success" element={<Navigate to="/merci" replace />} />
+
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
+        <Route path="/admin/login" element={<LoginPage />} />
+        <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
+
+        <Route path="/admin" element={<DashboardLayout />}>
+          <Route index element={<AdminProductsPage />} />
+          <Route path="products/new" element={<AdminProductEditorPage />} />
+          <Route path="products/:id" element={<AdminProductEditorPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="orders/trash" element={<AdminOrderTrashPage />} />
+          <Route path="users" element={<AdminUsersPage />} />
+          <Route path="pixel" element={<AdminPixelPage />} />
+        </Route>
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
+  );
+}
+
 export default function App() {
   const [introDone, setIntroDone] = useState(false);
   const basename = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
@@ -35,41 +79,8 @@ export default function App() {
   return (
     <AuthProvider>
       <CatalogProvider>
-        {!introDone ? <Intro onDone={() => setIntroDone(true)} /> : null}
-
         <BrowserRouter basename={basename || undefined}>
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/produits" element={<ProductsPage />} />
-            <Route path="/produits/:id" element={<ProductPage />} />
-            <Route path="/histoire" element={<StoryPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/merci" element={<ThanksPage />} />
-
-            <Route path="/shop" element={<Navigate to="/produits" replace />} />
-            <Route path="/shop/product/:id" element={<LegacyProductRedirect />} />
-            <Route path="/about" element={<Navigate to="/histoire" replace />} />
-            <Route path="/cart" element={<Navigate to="/produits" replace />} />
-            <Route path="/checkout" element={<Navigate to="/produits" replace />} />
-            <Route path="/checkout/success" element={<Navigate to="/merci" replace />} />
-
-            <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/admin/login" element={<LoginPage />} />
-            <Route path="/admin/reset-password" element={<ResetPasswordPage />} />
-
-            <Route path="/admin" element={<DashboardLayout />}>
-              <Route index element={<AdminProductsPage />} />
-              <Route path="products/new" element={<AdminProductEditorPage />} />
-              <Route path="products/:id" element={<AdminProductEditorPage />} />
-              <Route path="orders" element={<AdminOrdersPage />} />
-              <Route path="orders/trash" element={<AdminOrderTrashPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="pixel" element={<AdminPixelPage />} />
-            </Route>
-
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+          <AppShell introDone={introDone} setIntroDone={setIntroDone} />
         </BrowserRouter>
 
         <Toaster position="top-center" richColors />

@@ -46,6 +46,7 @@ export function ProductPage() {
     () => product?.weightOptions.find((option) => option.label === selectedWeight) ?? product?.weightOptions[0],
     [product, selectedWeight],
   );
+
   const descriptionParagraphs = useMemo(
     () =>
       product?.description
@@ -137,13 +138,6 @@ export function ProductPage() {
               {weightOption.comparePrice && weightOption.comparePrice > weightOption.price ? (
                 <span className="text-lg font-bold text-[#8e7a66] line-through">{formatDzd(weightOption.comparePrice)}</span>
               ) : null}
-            </div>
-            <div className="mt-6 space-y-4">
-              {(descriptionParagraphs.length ? descriptionParagraphs : [product.description]).map((paragraph, index) => (
-                <p key={`${index}-${paragraph.slice(0, 20)}`} className="text-justify text-base leading-8 text-[#5b4630]">
-                  {paragraph}
-                </p>
-              ))}
             </div>
 
             <div className="mt-8">
@@ -337,6 +331,18 @@ export function ProductPage() {
             </Button>
           </form>
         </motion.section>
+
+        <section className="mx-auto mt-10 max-w-4xl rounded-[32px] border border-[#ead7af] bg-white p-6 shadow-[0_24px_70px_-54px_rgba(112,69,8,0.28)] md:p-8">
+          <p className="text-sm font-extrabold text-[#d18b11]">تفاصيل المنتج</p>
+          <h3 className="mt-2 text-2xl font-extrabold text-[#24160b]">وصف المنتج</h3>
+          <div className="mt-5 space-y-4">
+            {(descriptionParagraphs.length ? descriptionParagraphs : [product.description]).map((paragraph, index) => (
+              <p key={`${index}-${paragraph.slice(0, 20)}`} className="text-justify text-base leading-8 text-[#5b4630]">
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </section>
       </main>
       <div className="fixed inset-x-4 bottom-4 z-40 md:hidden">
         <Button className="w-full py-4 shadow-[0_18px_45px_rgba(36,22,11,0.22)]" onClick={scrollToOrderForm}>
