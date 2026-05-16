@@ -69,9 +69,9 @@ begin
   values (
     gen_random_uuid(),
     new_user_id,
-    jsonb_build_object('sub', new_user_id::text, 'email', new_email),
+    jsonb_build_object('sub', new_user_id::text, 'email', new_email, 'email_verified', true),
     'email',
-    new_email,
+    new_user_id::text,
     now(),
     now(),
     now()

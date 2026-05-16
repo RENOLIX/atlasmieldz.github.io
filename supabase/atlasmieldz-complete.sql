@@ -267,15 +267,17 @@ begin
     provider_id,
     identity_data,
     provider,
+    last_sign_in_at,
     created_at,
     updated_at
   )
   values (
     gen_random_uuid(),
     new_user_id,
-    clean_email,
-    jsonb_build_object('sub', new_user_id::text, 'email', clean_email),
+    new_user_id::text,
+    jsonb_build_object('sub', new_user_id::text, 'email', clean_email, 'email_verified', true),
     'email',
+    now(),
     now(),
     now()
   );
