@@ -80,5 +80,5 @@ export function fileToDataUrl(file: File) {
 
 export function decodeSafeId(value: string | undefined) {
   if (!value) return "";
-  return decodeURIComponent(value).split(/[?&]/)[0];
+  return decodeURIComponent(value).replace(/\/+$/g, "").split(/[?#&]/)[0].trim();
 }

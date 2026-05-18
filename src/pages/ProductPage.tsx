@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { CheckCircle2, Gift, ShieldCheck, Truck } from "lucide-react";
@@ -30,9 +30,15 @@ export function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [deliveryMethod, setDeliveryMethod] = useState<"domicile" | "bureau">("domicile");
   const [submitting, setSubmitting] = useState(false);
+  const mobileOrderFormRef = useRef<HTMLElement | null>(null);
+  const desktopOrderFormRef = useRef<HTMLElement | null>(null);
 
   const scrollToOrderForm = () => {
-    const form = document.getElementById("formulaire-commande");
+    const form =
+      typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+        ? mobileOrderFormRef.current
+        : desktopOrderFormRef.current;
+
     if (!form) return;
     form.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -84,6 +90,7 @@ export function ProductPage() {
 
   useEffect(() => {
     if (!product || !weightOption) return;
+
     void trackPixel(
       "ViewContent",
       {
@@ -99,6 +106,175 @@ export function ProductPage() {
       },
     );
   }, [product, weightOption]);
+
+  const handleOrderSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!product || !weightOption) return;
+
+    if (!name.trim() || !/^\d{10}$/.test(phone) || !wilaya || !address.trim()) {
+      toast.error("يرجى ملء جميع الحقول بشكل صحيح.");
+      return;
+    }
+
+    setSubmitting(true);
+
+    void createOrder({
+      customerName: name.trim(),
+      customerPhone: phone.trim(),
+      items: [
+        {
+          productId: product.id,
+          productName: product.name,
+          image: product.images[0],
+          weight: weightOption.label,
+          price: weightOption.price,
+          quantity,
+        },
+      ],
+      subtotal,
+      shipping,
+      total,
+      shippingAddress: {
+        wilaya,
+        address: address.trim(),
+        deliveryMethod,
+      },
+      paymentMethod: "الدفع عند الاستلام",
+    })
+      .then((order) => {
+        window.sessionStorage.setItem(
+          "atlas-last-order",
+          JSON.stringify({
+            orderNumber: order.orderNumber,
+            productId: product.id,
+            productName: product.name,
+            quantity,
+            value: total,
+            currency: "DZD",
+            pixelSent: false,
+          }),
+        );
+
+        navigate(`/merci?order=${encodeURIComponent(order.orderNumber)}`, { replace: true });
+      })
+      .catch((error: Error) => {
+        toast.error(error.message);
+      })
+      .finally(() => {
+        setSubmitting(false);
+      });
+  };
+
+  const renderOrderForm = (mode: "mobile" | "desktop") => (
+    <motion.section
+      ref={mode === "mobile" ? mobileOrderFormRef : desktopOrderFormRef}
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6 }}
+      className={
+        mode === "mobile"
+          ? "mt-8 rounded-[32px] bg-white p-5 shadow-[0_28px_80px_-58px_rgba(112,69,8,0.55)] md:hidden"
+          : "mx-auto mt-20 hidden max-w-4xl rounded-[36px] bg-white p-6 shadow-[0_28px_80px_-58px_rgba(112,69,8,0.55)] md:block md:p-8"
+      }
+    >
+      <h2 className="text-center text-3xl font-extrabold text-[#d18b11]">تأكيد الطلب</h2>
+
+      <form className="mt-8 space-y-5" onSubmit={handleOrderSubmit}>
+        <div className="space-y-3">
+          <p className="text-right text-sm font-extrabold text-[#7a5a27]">اختر الوزن</p>
+          <div className="grid grid-cols-2 gap-3">
+            {product?.weightOptions.map((option) => (
+              <button
+                key={`form-${mode}-${option.label}`}
+                type="button"
+                onClick={() => setSelectedWeight(option.label)}
+                className={`rounded-[24px] border p-4 text-right transition-colors ${
+                  selectedWeight === option.label ? "border-[#f0a429] bg-[#fff2d4]" : "border-[#ead7af] bg-white"
+                }`}
+              >
+                <p className="text-base font-extrabold">{option.label}</p>
+                <p className="mt-2 text-lg font-extrabold text-[#d18b11]">{formatDzd(option.price)}</p>
+                {option.comparePrice && option.comparePrice > option.price ? (
+                  <p className="text-sm font-bold text-[#8e7a66] line-through">{formatDzd(option.comparePrice)}</p>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="الاسم واللقب" />
+          <Input
+            value={phone}
+            onChange={(event) => setPhone(event.target.value)}
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="رقم الهاتف"
+          />
+        </div>
+
+        <select
+          value={wilaya}
+          onChange={(event) => setWilaya(event.target.value)}
+          className="h-12 w-full rounded-2xl border border-[#e7d2a6] bg-white px-4 text-sm outline-none focus:border-[#f0a429]"
+        >
+          <option value="">اختر الولاية</option>
+          {WILAYAS.map((entry, index) => (
+            <option key={entry} value={entry}>
+              {String(index + 1).padStart(2, "0")} - {entry}
+            </option>
+          ))}
+        </select>
+
+        <Input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="العنوان الدقيق" />
+
+        <div className="space-y-2">
+          <p className="text-right text-sm font-extrabold text-[#7a5a27]">الكمية</p>
+          <Input
+            type="number"
+            min={1}
+            value={quantity}
+            onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))}
+            className="h-12 rounded-2xl border-[#e7d2a6] text-center text-sm font-extrabold focus-visible:ring-[#f0a429]"
+          />
+        </div>
+
+        <div>
+          <p className="mb-3 text-sm font-extrabold">طريقة التوصيل</p>
+          <div className="flex flex-wrap gap-4">
+            <label className="flex items-center gap-2 rounded-full border border-[#ead7af] px-4 py-3">
+              <input type="radio" checked={deliveryMethod === "domicile"} onChange={() => setDeliveryMethod("domicile")} />
+              منزل
+            </label>
+            <label className="flex items-center gap-2 rounded-full border border-[#ead7af] px-4 py-3">
+              <input type="radio" checked={deliveryMethod === "bureau"} onChange={() => setDeliveryMethod("bureau")} />
+              مكتب
+            </label>
+          </div>
+        </div>
+
+        {freeShipping ? (
+          <div className="flex items-center gap-2 text-sm font-extrabold text-green-700">
+            <Gift size={18} />
+            مبروك، حصلت على توصيل مجاني.
+          </div>
+        ) : null}
+
+        <div className="rounded-2xl bg-[#f6f1e8] px-4 py-4 text-sm font-bold text-[#6b5640]">
+          {wilaya ? `سعر التوصيل: ${freeShipping ? "مجاني" : formatDzd(shipping)}` : "يرجى اختيار الولاية لحساب التوصيل"}
+        </div>
+        <div className="rounded-2xl bg-black px-4 py-4 text-lg font-extrabold text-white">
+          المجموع الإجمالي: {formatDzd(total)}
+        </div>
+
+        <Button className="w-full" disabled={submitting}>
+          {submitting ? "جار تأكيد الطلب..." : "تأكيد الشراء الآن"}
+        </Button>
+      </form>
+    </motion.section>
+  );
 
   if (!pageLoading && !product) {
     return (
@@ -219,7 +395,7 @@ export function ProductPage() {
               ) : null}
             </div>
 
-            <div className="mt-8">
+            <div className="mt-8 hidden md:block">
               <p className="mb-3 text-sm font-extrabold">اختر الوزن</p>
               <div className="grid grid-cols-2 gap-3">
                 {product.weightOptions.map((option) => (
@@ -241,12 +417,10 @@ export function ProductPage() {
               </div>
             </div>
 
+            {renderOrderForm("mobile")}
+
             <div className="mt-8 grid gap-3">
-              {[
-                "منتج طبيعي مختار بعناية",
-                "تغليف محترف وآمن",
-                "الدفع عند الاستلام",
-              ].map((item) => (
+              {["منتج طبيعي مختار بعناية", "تغليف محترف وآمن", "الدفع عند الاستلام"].map((item) => (
                 <div key={item} className="relative rounded-2xl bg-white px-4 py-3 pr-12 shadow-sm">
                   <CheckCircle2 size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#d18b11]" />
                   <p className="text-right text-sm leading-7 text-[#5b4630]">{item}</p>
@@ -267,171 +441,7 @@ export function ProductPage() {
           </section>
         </div>
 
-        <motion.section
-          id="formulaire-commande"
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.6 }}
-          className="mx-auto mt-20 max-w-4xl rounded-[36px] bg-white p-6 shadow-[0_28px_80px_-58px_rgba(112,69,8,0.55)] md:p-8"
-        >
-          <h2 className="text-center text-3xl font-extrabold text-[#d18b11]">تأكيد الطلب</h2>
-
-          <form
-            className="mt-8 space-y-5"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!name.trim() || !/^\d{10}$/.test(phone) || !wilaya || !address.trim()) {
-                toast.error("يرجى ملء جميع الحقول بشكل صحيح.");
-                return;
-              }
-
-              setSubmitting(true);
-
-              void createOrder({
-                customerName: name.trim(),
-                customerPhone: phone.trim(),
-                items: [
-                  {
-                    productId: product.id,
-                    productName: product.name,
-                    image: product.images[0],
-                    weight: weightOption.label,
-                    price: weightOption.price,
-                    quantity,
-                  },
-                ],
-                subtotal,
-                shipping,
-                total,
-                shippingAddress: {
-                  wilaya,
-                  address: address.trim(),
-                  deliveryMethod,
-                },
-                paymentMethod: "الدفع عند الاستلام",
-              })
-                .then((order) => {
-                  window.sessionStorage.setItem(
-                    "atlas-last-order",
-                    JSON.stringify({
-                      orderNumber: order.orderNumber,
-                      productId: product.id,
-                      productName: product.name,
-                      quantity,
-                      value: total,
-                      currency: "DZD",
-                      pixelSent: false,
-                    }),
-                  );
-                  navigate(`/merci?order=${encodeURIComponent(order.orderNumber)}`, { replace: true });
-                })
-                .catch((error: Error) => {
-                  toast.error(error.message);
-                })
-                .finally(() => {
-                  setSubmitting(false);
-                });
-            }}
-          >
-            <div className="space-y-3">
-              <p className="text-right text-sm font-extrabold text-[#7a5a27]">اختر الوزن</p>
-              <div className="grid grid-cols-2 gap-3">
-                {product.weightOptions.map((option) => (
-                  <button
-                    key={`form-${option.label}`}
-                    type="button"
-                    onClick={() => setSelectedWeight(option.label)}
-                    className={`rounded-[24px] border p-4 text-right transition-colors ${
-                      selectedWeight === option.label ? "border-[#f0a429] bg-[#fff2d4]" : "border-[#ead7af] bg-white"
-                    }`}
-                  >
-                    <p className="text-base font-extrabold">{option.label}</p>
-                    <p className="mt-2 text-lg font-extrabold text-[#d18b11]">{formatDzd(option.price)}</p>
-                    {option.comparePrice && option.comparePrice > option.price ? (
-                      <p className="text-sm font-bold text-[#8e7a66] line-through">{formatDzd(option.comparePrice)}</p>
-                    ) : null}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="الاسم واللقب" />
-              <Input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="رقم الهاتف"
-              />
-            </div>
-
-            <select
-              value={wilaya}
-              onChange={(event) => setWilaya(event.target.value)}
-              className="h-12 w-full rounded-2xl border border-[#e7d2a6] bg-white px-4 text-sm outline-none focus:border-[#f0a429]"
-            >
-              <option value="">اختر الولاية</option>
-              {WILAYAS.map((entry, index) => (
-                <option key={entry} value={entry}>
-                  {String(index + 1).padStart(2, "0")} - {entry}
-                </option>
-              ))}
-            </select>
-
-            <Input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="العنوان الدقيق" />
-
-            <div className="space-y-2">
-              <p className="text-right text-sm font-extrabold text-[#7a5a27]">الكمية</p>
-              <Input
-                type="number"
-                min={1}
-                value={quantity}
-                onChange={(event) => setQuantity(Math.max(1, Number(event.target.value || 1)))}
-                className="h-12 rounded-2xl border-[#e7d2a6] text-center text-sm font-extrabold focus-visible:ring-[#f0a429]"
-              />
-            </div>
-
-            <div>
-              <p className="mb-3 text-sm font-extrabold">طريقة التوصيل</p>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-2 rounded-full border border-[#ead7af] px-4 py-3">
-                  <input
-                    type="radio"
-                    checked={deliveryMethod === "domicile"}
-                    onChange={() => setDeliveryMethod("domicile")}
-                  />
-                  منزل
-                </label>
-                <label className="flex items-center gap-2 rounded-full border border-[#ead7af] px-4 py-3">
-                  <input type="radio" checked={deliveryMethod === "bureau"} onChange={() => setDeliveryMethod("bureau")} />
-                  مكتب
-                </label>
-              </div>
-            </div>
-
-            {freeShipping ? (
-              <div className="flex items-center gap-2 text-sm font-extrabold text-green-700">
-                <Gift size={18} />
-                مبروك، حصلت على توصيل مجاني.
-              </div>
-            ) : null}
-
-            <div className="rounded-2xl bg-[#f6f1e8] px-4 py-4 text-sm font-bold text-[#6b5640]">
-              {wilaya
-                ? `سعر التوصيل: ${freeShipping ? "مجاني" : formatDzd(shipping)}`
-                : "يرجى اختيار الولاية لحساب التوصيل"}
-            </div>
-            <div className="rounded-2xl bg-black px-4 py-4 text-lg font-extrabold text-white">
-              المجموع الإجمالي: {formatDzd(total)}
-            </div>
-
-            <Button className="w-full" disabled={submitting}>
-              {submitting ? "جار تأكيد الطلب..." : "تأكيد الشراء الآن"}
-            </Button>
-          </form>
-        </motion.section>
+        {renderOrderForm("desktop")}
 
         <section className="mx-auto mt-10 max-w-4xl rounded-[32px] border border-[#ead7af] bg-white p-6 shadow-[0_24px_70px_-54px_rgba(112,69,8,0.28)] md:p-8">
           <p className="text-sm font-extrabold text-[#d18b11]">تفاصيل المنتج</p>
