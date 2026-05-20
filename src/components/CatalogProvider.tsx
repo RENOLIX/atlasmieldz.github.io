@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -8,24 +9,31 @@ import {
 } from "react";
 import { fetchPublicProductCards } from "@/lib/supabase";
 import type { ProductRecord } from "@/types";
+import { getCachedProductCollection, saveCachedProduct, saveCachedProducts } from "@/lib/public-product-cache";
 
 interface CatalogContextValue {
   products: ProductRecord[];
   loading: boolean;
   reload: () => Promise<void>;
+  cacheProduct: (product: ProductRecord) => void;
 }
 
 const CatalogContext = createContext<CatalogContextValue | null>(null);
 
 export function CatalogProvider({ children }: PropsWithChildren) {
-  const [products, setProducts] = useState<ProductRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<ProductRecord[]>(() => getCachedProductCollection("product"));
+  const [loading, setLoading] = useState(products.length === 0);
+
+  const cacheProduct = useCallback((product: ProductRecord) => {
+    saveCachedProduct(product);
+  }, []);
 
   const reload = async () => {
-    setLoading(true);
+    if (!products.length) setLoading(true);
     try {
       const nextProducts = await fetchPublicProductCards();
       setProducts(nextProducts);
+      saveCachedProducts(nextProducts);
     } finally {
       setLoading(false);
     }
@@ -35,7 +43,7 @@ export function CatalogProvider({ children }: PropsWithChildren) {
     void reload();
   }, []);
 
-  const value = useMemo(() => ({ products, loading, reload }), [loading, products]);
+  const value = useMemo(() => ({ products, loading, reload, cacheProduct }), [cacheProduct, loading, products]);
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }
 

@@ -14,6 +14,10 @@ import type {
 import { DEFAULT_PRODUCTS, PIXEL_SETTINGS_KEY } from "@/lib/constants";
 
 const ORDER_TRASH_KEY = "order_trash";
+const PUBLIC_PRODUCT_COLUMNS =
+  "id, product_type, name, description, images, price, weight_prices, weight_compare_prices, weights, stock, featured, active, created_at, updated_at";
+const PUBLIC_PRODUCT_CARD_COLUMNS =
+  "id, product_type, name, description, stock, featured, active, created_at, updated_at, weights, weight_prices, weight_compare_prices, first_image, second_image";
 
 const SUPABASE_URL = "https://oodlpererkbxhiuugbax.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Iy7vBnXW9i9wb-TkEBSuFw_mA-k0JSr";
@@ -178,7 +182,7 @@ function makeOrderNumber() {
 export async function fetchPublicProducts(productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(PUBLIC_PRODUCT_COLUMNS)
     .eq("active", true)
     .eq("product_type", productType)
     .order("featured", { ascending: false })
@@ -195,7 +199,7 @@ export async function fetchPublicProducts(productType: ProductKind = "product") 
 export async function fetchPublicProductCards(productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products_public_cards")
-    .select("*")
+    .select(PUBLIC_PRODUCT_CARD_COLUMNS)
     .eq("active", true)
     .eq("product_type", productType)
     .order("featured", { ascending: false })
@@ -211,7 +215,7 @@ export async function fetchPublicProductCards(productType: ProductKind = "produc
 export async function fetchPublicProductById(id: string, productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select(PUBLIC_PRODUCT_COLUMNS)
     .eq("active", true)
     .eq("product_type", productType)
     .eq("id", id)

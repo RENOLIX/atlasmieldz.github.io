@@ -35,7 +35,7 @@ export function ProductsPage() {
                 transition={{ duration: 0.55, delay: index * 0.06 }}
                 className="overflow-hidden rounded-[30px] border border-[#ecd6a8] bg-white shadow-[0_24px_70px_-56px_rgba(112,69,8,0.55)]"
               >
-                <Link to={`/produits/${product.id}`}>
+                <Link to={`/produits/${product.id}`} state={{ product }}>
                   <div className="aspect-[4/5] overflow-hidden">
                     <img
                       src={product.images[0]}

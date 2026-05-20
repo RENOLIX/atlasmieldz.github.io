@@ -336,7 +336,7 @@ export function HomePage() {
                 transition={{ duration: 0.7, delay: index * 0.08 }}
                 className={`group overflow-hidden rounded-[34px] border border-[#ead7af] bg-white shadow-[0_30px_90px_-58px_rgba(112,69,8,0.5)] ${index === 1 ? "xl:-translate-y-6" : ""}`}
               >
-                <Link to={`/produits/${product.id}`} className="block">
+                <Link to={`/produits/${product.id}`} state={{ product }} className="block">
                   <div className="relative aspect-[4/5] overflow-hidden">
                     <img
                       src={product.images[0]}

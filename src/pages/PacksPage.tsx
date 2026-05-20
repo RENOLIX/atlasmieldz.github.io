@@ -3,17 +3,22 @@ import { motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { fetchPublicProducts } from "@/lib/supabase";
+import { fetchPublicProductCards } from "@/lib/supabase";
+import { getCachedProductCollection, saveCachedProducts } from "@/lib/public-product-cache";
 import { formatDzd } from "@/lib/utils";
 import type { ProductRecord } from "@/types";
 
 export function PacksPage() {
-  const [packs, setPacks] = useState<ProductRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [packs, setPacks] = useState<ProductRecord[]>(() => getCachedProductCollection("pack"));
+  const [loading, setLoading] = useState(packs.length === 0);
 
   useEffect(() => {
-    void fetchPublicProducts("pack")
-      .then((items) => setPacks(items.filter((item) => item.active)))
+    void fetchPublicProductCards("pack")
+      .then((items) => {
+        const nextPacks = items.filter((item) => item.active);
+        setPacks(nextPacks);
+        saveCachedProducts(nextPacks);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,7 +51,7 @@ export function PacksPage() {
                 transition={{ duration: 0.55, delay: index * 0.06 }}
                 className="overflow-hidden rounded-[30px] border border-[#ecd6a8] bg-white shadow-[0_24px_70px_-56px_rgba(112,69,8,0.55)]"
               >
-                <Link to={`/packs/${pack.id}`}>
+                <Link to={`/packs/${pack.id}`} state={{ product: pack }}>
                   <div className="aspect-[4/5] overflow-hidden">
                     <img
                       src={pack.images[0]}
