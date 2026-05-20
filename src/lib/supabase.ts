@@ -14,38 +14,6 @@ import type {
 import { DEFAULT_PRODUCTS, PIXEL_SETTINGS_KEY } from "@/lib/constants";
 
 const ORDER_TRASH_KEY = "order_trash";
-const PUBLIC_PRODUCT_COLUMNS = [
-  "id",
-  "product_type",
-  "name",
-  "description",
-  "images",
-  "price",
-  "weight_prices",
-  "weight_compare_prices",
-  "weights",
-  "stock",
-  "featured",
-  "active",
-  "created_at",
-  "updated_at",
-].join(", ");
-const PUBLIC_PRODUCT_CARD_COLUMNS = [
-  "id",
-  "product_type",
-  "name",
-  "description",
-  "stock",
-  "featured",
-  "active",
-  "created_at",
-  "updated_at",
-  "weights",
-  "weight_prices",
-  "weight_compare_prices",
-  "first_image",
-  "second_image",
-].join(", ");
 
 const SUPABASE_URL = "https://oodlpererkbxhiuugbax.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Iy7vBnXW9i9wb-TkEBSuFw_mA-k0JSr";
@@ -210,7 +178,7 @@ function makeOrderNumber() {
 export async function fetchPublicProducts(productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products")
-    .select(PUBLIC_PRODUCT_COLUMNS)
+    .select("*")
     .eq("active", true)
     .eq("product_type", productType)
     .order("featured", { ascending: false })
@@ -220,21 +188,21 @@ export async function fetchPublicProducts(productType: ProductKind = "product") 
     return [];
   }
 
-  const products = ((data ?? []) as unknown[]).map((row) => parseProduct(row as Record<string, unknown>));
+  const products = (data ?? []).map((row) => parseProduct(row as Record<string, unknown>));
   return products;
 }
 
 export async function fetchPublicProductCards(productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products_public_cards")
-    .select(PUBLIC_PRODUCT_CARD_COLUMNS)
+    .select("*")
     .eq("active", true)
     .eq("product_type", productType)
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
 
   if (!error && data) {
-    return (data as unknown[]).map((row) => parseProductCard(row as Record<string, unknown>));
+    return data.map((row) => parseProductCard(row as Record<string, unknown>));
   }
 
   return fetchPublicProducts(productType);
@@ -243,7 +211,7 @@ export async function fetchPublicProductCards(productType: ProductKind = "produc
 export async function fetchPublicProductById(id: string, productType: ProductKind = "product") {
   const { data, error } = await supabase
     .from("products")
-    .select(PUBLIC_PRODUCT_COLUMNS)
+    .select("*")
     .eq("active", true)
     .eq("product_type", productType)
     .eq("id", id)
@@ -254,7 +222,7 @@ export async function fetchPublicProductById(id: string, productType: ProductKin
   }
 
   if (!data) return null;
-  return parseProduct(data as unknown as Record<string, unknown>);
+  return parseProduct(data as Record<string, unknown>);
 }
 
 export async function fetchAdminProducts(productType: ProductKind = "product") {

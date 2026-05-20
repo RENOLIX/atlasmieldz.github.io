@@ -1,19 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { useCatalog } from "@/components/CatalogProvider";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
+import { fetchPublicProducts } from "@/lib/supabase";
 import { formatDzd } from "@/lib/utils";
+import type { ProductRecord } from "@/types";
 
 export function PacksPage() {
-  const { packs, loadingPacks, reloadPacks } = useCatalog();
-  const visiblePacks = packs.filter((item) => item.active);
+  const [packs, setPacks] = useState<ProductRecord[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (packs.length) return;
-    void reloadPacks();
-  }, [packs.length, reloadPacks]);
+    void fetchPublicProducts("pack")
+      .then((items) => setPacks(items.filter((item) => item.active)))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#fffaf0] text-[#24160b]">
@@ -27,15 +29,15 @@ export function PacksPage() {
           </p>
         </div>
 
-        {loadingPacks && visiblePacks.length === 0 ? (
+        {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="h-[420px] animate-pulse rounded-[28px] bg-[#f6ead0]" />
             ))}
           </div>
-        ) : visiblePacks.length ? (
+        ) : packs.length ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {visiblePacks.map((pack, index) => (
+            {packs.map((pack, index) => (
               <motion.article
                 key={pack.id}
                 initial={{ opacity: 0, y: 34 }}
@@ -44,7 +46,7 @@ export function PacksPage() {
                 transition={{ duration: 0.55, delay: index * 0.06 }}
                 className="overflow-hidden rounded-[30px] border border-[#ecd6a8] bg-white shadow-[0_24px_70px_-56px_rgba(112,69,8,0.55)]"
               >
-                <Link to={`/packs/${pack.id}`} state={{ product: pack }}>
+                <Link to={`/packs/${pack.id}`}>
                   <div className="aspect-[4/5] overflow-hidden">
                     <img
                       src={pack.images[0]}
