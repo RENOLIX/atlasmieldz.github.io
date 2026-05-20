@@ -47,21 +47,12 @@ function readCatalogCache() {
   }
 }
 
-function getCachedCollection(cache: ProductCacheMap, productType: ProductKind) {
-  return Object.values(cache)
-    .filter((item) => item.productType === productType)
-    .sort((left, right) => {
-      if (left.featured !== right.featured) return left.featured ? -1 : 1;
-      return (right.createdAt ?? "").localeCompare(left.createdAt ?? "");
-    });
-}
-
 export function CatalogProvider({ children }: PropsWithChildren) {
+  const [products, setProducts] = useState<ProductRecord[]>([]);
+  const [packs, setPacks] = useState<ProductRecord[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [loadingPacks, setLoadingPacks] = useState(false);
   const [cache, setCache] = useState<ProductCacheMap>(() => readCatalogCache());
-  const [products, setProducts] = useState<ProductRecord[]>(() => getCachedCollection(readCatalogCache(), "product"));
-  const [packs, setPacks] = useState<ProductRecord[]>(() => getCachedCollection(readCatalogCache(), "pack"));
-  const [loadingProducts, setLoadingProducts] = useState(products.length === 0);
-  const [loadingPacks, setLoadingPacks] = useState(packs.length === 0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -115,8 +106,7 @@ export function CatalogProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     void reloadProducts();
-    void reloadPacks();
-  }, [reloadPacks, reloadProducts]);
+  }, [reloadProducts]);
 
   const getCachedProduct = useCallback(
     (id: string, productType: ProductKind = "product") => cache[getCacheKey(id, productType)] ?? null,
