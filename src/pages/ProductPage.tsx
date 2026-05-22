@@ -7,7 +7,9 @@ import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_PRICES, WILAYAS } from "@/lib/constants";
 import { trackPixel } from "@/lib/pixel";
-import { createOrder, fetchPublicProductById } from "@/lib/supabase";
+import { useCatalog } from "@/components/CatalogProvider";
+import { readCachedProduct } from "@/lib/public-product-db";
+import { createOrder } from "@/lib/supabase";
 import type { ProductRecord } from "@/types";
 import { decodeSafeId, formatDzd } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,10 +19,17 @@ export function ProductPage() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { products, packs, loadingProducts, loadingPacks } = useCatalog();
   const isPackPage = location.pathname.startsWith("/packs");
   const productId = decodeSafeId(id);
-  const [product, setProduct] = useState<ProductRecord | null>(null);
-  const [loading, setLoading] = useState(true);
+  const stateProduct = (location.state as { product?: ProductRecord } | null)?.product;
+  const sourceList = isPackPage ? packs : products;
+  const sourceLoading = isPackPage ? loadingPacks : loadingProducts;
+  const [product, setProduct] = useState<ProductRecord | null>(
+    stateProduct?.id === productId && stateProduct.productType === (isPackPage ? "pack" : "product")
+      ? stateProduct
+      : sourceList.find((item) => item.id === productId) ?? null,
+  );
   const [activeImage, setActiveImage] = useState(0);
   const [selectedWeight, setSelectedWeight] = useState("");
   const [name, setName] = useState("");
@@ -32,6 +41,7 @@ export function ProductPage() {
   const [submitting, setSubmitting] = useState(false);
   const mobileOrderFormRef = useRef<HTMLElement | null>(null);
   const desktopOrderFormRef = useRef<HTMLElement | null>(null);
+  const lastTrackedProductRef = useRef("");
 
   const scrollToOrderForm = () => {
     const form =
@@ -45,20 +55,34 @@ export function ProductPage() {
 
   useEffect(() => {
     if (!productId) {
-      setLoading(false);
       setProduct(null);
       return;
     }
 
-    setLoading(true);
-    void fetchPublicProductById(productId, isPackPage ? "pack" : "product")
-      .then((item) => setProduct(item))
-      .catch((error: Error) => {
-        toast.error(error.message);
-        setProduct(null);
+    const nextProduct =
+      stateProduct?.id === productId && stateProduct.productType === (isPackPage ? "pack" : "product")
+        ? stateProduct
+        : sourceList.find((item) => item.id === productId) ?? null;
+
+    setProduct(nextProduct);
+  }, [isPackPage, productId, sourceList, stateProduct]);
+
+  useEffect(() => {
+    if (!productId || product) return;
+
+    let cancelled = false;
+    void readCachedProduct(isPackPage ? "pack" : "product", productId)
+      .then((cachedProduct) => {
+        if (!cancelled && cachedProduct) {
+          setProduct(cachedProduct);
+        }
       })
-      .finally(() => setLoading(false));
-  }, [isPackPage, productId]);
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isPackPage, product, productId]);
 
   useEffect(() => {
     if (product?.weightOptions[0]) {
@@ -85,11 +109,14 @@ export function ProductPage() {
   const freeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
   const shipping = wilaya ? (freeShipping ? 0 : SHIPPING_PRICES[wilaya]?.[deliveryMethod] ?? 0) : 0;
   const total = subtotal + shipping;
-  const pageLoading = loading;
+  const pageLoading = sourceLoading && !product;
   const backToListing = isPackPage ? "/packs" : "/produits";
 
   useEffect(() => {
     if (!product || !weightOption) return;
+    const trackKey = `${product.productType}:${product.id}`;
+    if (lastTrackedProductRef.current === trackKey) return;
+    lastTrackedProductRef.current = trackKey;
 
     void trackPixel(
       "ViewContent",

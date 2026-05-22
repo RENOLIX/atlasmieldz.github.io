@@ -6,11 +6,10 @@ import { CatalogProvider } from "@/components/CatalogProvider";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { Intro } from "@/components/layout/Intro";
 import { HomePage } from "@/pages/HomePage";
+import { PacksPage } from "@/pages/PacksPage";
+import { ProductPage } from "@/pages/ProductPage";
+import { ProductsPage } from "@/pages/ProductsPage";
 import { decodeSafeId } from "@/lib/utils";
-
-const ProductsPage = lazy(() => import("@/pages/ProductsPage").then((module) => ({ default: module.ProductsPage })));
-const ProductPage = lazy(() => import("@/pages/ProductPage").then((module) => ({ default: module.ProductPage })));
-const PacksPage = lazy(() => import("@/pages/PacksPage").then((module) => ({ default: module.PacksPage })));
 const StoryPage = lazy(() => import("@/pages/StoryPage").then((module) => ({ default: module.StoryPage })));
 const ContactPage = lazy(() => import("@/pages/ContactPage").then((module) => ({ default: module.ContactPage })));
 const ThanksPage = lazy(() => import("@/pages/ThanksPage").then((module) => ({ default: module.ThanksPage })));
